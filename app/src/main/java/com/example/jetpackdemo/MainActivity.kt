@@ -387,7 +387,7 @@ fun dicompose_app() {
     }
 
     DisposableEffect(key1 = state.value) {
-        Log.d("effect start", "Disposable effect started");
+        Log.d("effect start", "Disposable effect started test");
         onDispose {
             Log.d("effect clean up", "Clining up side effect");
 
