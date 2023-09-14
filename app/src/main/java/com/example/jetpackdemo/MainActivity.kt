@@ -18,10 +18,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color.Companion.Cyan
 import androidx.compose.ui.graphics.Color.Companion.LightGray
 import androidx.compose.ui.graphics.Color.Companion.Magenta
@@ -78,9 +81,12 @@ class MainActivity : ComponentActivity() {
             //myState()
 
             //dicompose_app()
-           // MediaComposable()
-            KeyboardComposable()
-            TextField(value = "", onValueChange ={} )
+            // MediaComposable()
+//            KeyboardComposable()
+//            TextField(value = "", onValueChange = {})
+
+            //Loader()
+            Derived()
         }
     }
 }
@@ -404,7 +410,7 @@ fun dicompose_app() {
 fun MediaComposable() {
     val context = LocalContext.current
     DisposableEffect(Unit) {
-        val mediaPlayer = MediaPlayer.create(context,R.raw.happy_song)
+        val mediaPlayer = MediaPlayer.create(context, R.raw.happy_song)
         mediaPlayer.start()
         onDispose {
             mediaPlayer.stop()
@@ -415,19 +421,63 @@ fun MediaComposable() {
 
 //keyboard available or not
 @Composable
-fun KeyboardComposable(){
-   val view = LocalView.current
-    DisposableEffect(key1 = Unit ){
+fun KeyboardComposable() {
+    val view = LocalView.current
+    DisposableEffect(key1 = Unit) {
         val listener = ViewTreeObserver.OnGlobalLayoutListener {
             val insets = ViewCompat.getRootWindowInsets(view)
             val isKeyboardVisible = insets?.isVisible(WindowInsetsCompat.Type.ime())
             Log.d("val..", isKeyboardVisible.toString())
         }
 
-        view.viewTreeObserver.addOnGlobalLayoutListener (listener)
+        view.viewTreeObserver.addOnGlobalLayoutListener(listener)
         onDispose {
-            view.viewTreeObserver.removeOnGlobalLayoutListener (listener)
+            view.viewTreeObserver.removeOnGlobalLayoutListener(listener)
 
         }
+    }
+}
+
+//product state for live data decompose
+@Composable
+fun Loader() {
+    val degree = produceState(initialValue = 0) {
+        while (true) {
+            delay(16)
+            value = (value + 10) % 360
+        }
+    }
+
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize(1f),
+        content = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Image(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = "",
+                    modifier = Modifier
+                        .size(60.dp)
+                        .rotate(degree.value.toFloat())
+                )
+                Text(text = "Loading")
+            }
+        })
+}
+
+//derive state of
+@Composable
+fun Derived() {
+    val tableOf = remember { mutableStateOf(5) }
+    val index = produceState(initialValue = 1) {
+        repeat(9) {
+            delay(1000)
+            value += 1
+        }
+    }
+
+    val message = derivedStateOf {
+        "${tableOf.value} * ${index.value} = ${tableOf.value * index.value}"
+    }
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize(1f)) {
+        Text(text = message.value, style = MaterialTheme.typography.h3)
     }
 }
