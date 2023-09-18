@@ -9,10 +9,7 @@ import android.view.ViewTreeObserver
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.ColorRes
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -25,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color.Companion.Black
 import androidx.compose.ui.graphics.Color.Companion.Cyan
 import androidx.compose.ui.graphics.Color.Companion.LightGray
 import androidx.compose.ui.graphics.Color.Companion.Magenta
@@ -44,18 +42,39 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.jetpackdemo.api.tweestyApi
+import com.example.jetpackdemo.screens.CategoryScreen
+import com.example.jetpackdemo.screens.DetailScreen
 import com.example.jetpackdemo.screens.QuoteDetail
 import com.example.jetpackdemo.screens.QuoteListScreen
 import com.example.jetpackdemo.ui.theme.JetpackDemoTheme
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.*
+import javax.inject.Inject
 
+@AndroidEntryPoint
+@ExperimentalFoundationApi
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var tweestyApi: tweestyApi
+
     @SuppressLint("CoroutineCreationDuringComposition")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+/*
+
+        GlobalScope.launch {
+            var response = tweestyApi.getCategories()
+            Log.d("code", response.body()!!.distinct().toString())
+        }
+*/
 
         /* CoroutineScope(Dispatchers.IO).launch {
              delay(1000)
@@ -86,7 +105,22 @@ class MainActivity : ComponentActivity() {
 //            TextField(value = "", onValueChange = {})
 
             //Loader()
-            Derived()
+            //    Derived()
+            JetpackDemoTheme {
+                Scaffold(
+                    topBar = {
+                        TopAppBar(title = {
+                            Text(text = "Tweesty")
+                        }, backgroundColor = Black, contentColor = White)
+                    }) {
+                    Box(modifier = Modifier.padding(it)) {
+                        navCatg()
+                    }
+                }
+                //  CategoryScreen()
+                //  DetailScreen()
+            }
+
         }
     }
 }
@@ -464,6 +498,7 @@ fun Loader() {
 }
 
 //derive state of
+@SuppressLint("UnrememberedMutableState")
 @Composable
 fun Derived() {
     val tableOf = remember { mutableStateOf(5) }
@@ -479,5 +514,29 @@ fun Derived() {
     }
     Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize(1f)) {
         Text(text = message.value, style = MaterialTheme.typography.h3)
+    }
+}
+
+@ExperimentalFoundationApi
+@Composable
+fun navCatg() {
+    val navController = rememberNavController()
+    NavHost(navController = navController, startDestination = "category") {
+        composable(route = "category") {
+            CategoryScreen(onClick = {
+                navController.navigate("detail/${it}")
+            })
+        }
+
+
+        composable(
+
+            route = "detail/{category}",
+            arguments = listOf(navArgument("category") {
+                type = NavType.StringType
+            })
+        ) {
+            DetailScreen()
+        }
     }
 }
